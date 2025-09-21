@@ -10,7 +10,7 @@ const blog = defineCollection({
 			title: z.string(),
 			description: z.string(),
 			// Transform string to Date object
-			pubDate: z.coerce.date(),
+			createdAt: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: image().optional(),
 			// 글 숨기기 기능

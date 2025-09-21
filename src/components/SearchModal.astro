@@ -1,0 +1,183 @@
+---
+// Search Modal Component
+---
+
+<div id="search-modal" class="fixed inset-0 z-50 hidden">
+  <!-- Backdrop -->
+  <div id="search-backdrop" class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+  <!-- Modal -->
+  <div class="fixed inset-x-0 top-20 mx-auto max-w-2xl px-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+      <!-- Search Input -->
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="검색어를 입력하세요..."
+            class="flex-1 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none text-lg"
+            autocomplete="off"
+          />
+          <kbd class="hidden sm:inline-block px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">ESC</kbd>
+        </div>
+      </div>
+
+      <!-- Search Results -->
+      <div id="search-results" class="max-h-96 overflow-y-auto">
+        <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+          검색어를 입력하면 결과가 표시됩니다
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  // Search index will be loaded here
+  let searchIndex: any[] = [];
+  let fuse: Fuse<any>;
+
+  // Load search index
+  async function loadSearchIndex() {
+    try {
+      const response = await fetch('/hue-log/search-index.json');
+      searchIndex = await response.json();
+
+      // Initialize Fuse.js
+      fuse = new Fuse(searchIndex, {
+        keys: ['title', 'description', 'content', 'tags', 'category'],
+        includeScore: true,
+        threshold: 0.3,
+        includeMatches: true,
+      });
+    } catch (error) {
+      console.error('Failed to load search index:', error);
+    }
+  }
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', () => {
+    loadSearchIndex();
+
+    const modal = document.getElementById('search-modal');
+    const backdrop = document.getElementById('search-backdrop');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const searchResults = document.getElementById('search-results');
+
+    // Open search modal with Cmd/Ctrl + K
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+    });
+
+    // Close on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+        closeSearch();
+      }
+    });
+
+    // Close on backdrop click
+    backdrop?.addEventListener('click', closeSearch);
+
+    // Search on input
+    searchInput?.addEventListener('input', (e) => {
+      const query = (e.target as HTMLInputElement).value;
+      performSearch(query);
+    });
+
+    function openSearch() {
+      modal?.classList.remove('hidden');
+      searchInput?.focus();
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSearch() {
+      modal?.classList.add('hidden');
+      searchInput!.value = '';
+      searchResults!.innerHTML = '<div class="p-8 text-center text-gray-500 dark:text-gray-400">검색어를 입력하면 결과가 표시됩니다</div>';
+      document.body.style.overflow = '';
+    }
+
+    function performSearch(query: string) {
+      if (!searchResults) return;
+
+      if (query.trim() === '') {
+        searchResults.innerHTML = '<div class="p-8 text-center text-gray-500 dark:text-gray-400">검색어를 입력하면 결과가 표시됩니다</div>';
+        return;
+      }
+
+      if (!fuse) {
+        searchResults.innerHTML = '<div class="p-8 text-center text-gray-500 dark:text-gray-400">검색 인덱스를 로드하는 중...</div>';
+        return;
+      }
+
+      const results = fuse.search(query).slice(0, 10);
+
+      if (results.length === 0) {
+        searchResults.innerHTML = '<div class="p-8 text-center text-gray-500 dark:text-gray-400">검색 결과가 없습니다</div>';
+        return;
+      }
+
+      searchResults.innerHTML = results.map(result => {
+        const item = result.item;
+        return `
+          <a href="${item.url}" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  ${highlightText(item.title, query)}
+                </h3>
+                ${item.description ? `
+                  <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                    ${highlightText(item.description, query)}
+                  </p>
+                ` : ''}
+                <div class="flex items-center gap-2 mt-2">
+                  ${item.date ? `
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      ${new Date(item.date).toLocaleDateString('ko-KR')}
+                    </span>
+                  ` : ''}
+                  ${item.category ? `
+                    <span class="text-xs text-purple-600 dark:text-purple-400">
+                      ${item.category}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function highlightText(text: string, query: string): string {
+      const regex = new RegExp(`(${query})`, 'gi');
+      return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 text-inherit">$1</mark>');
+    }
+
+    // Expose functions globally for search button
+    (window as any).openSearch = openSearch;
+  });
+</script>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

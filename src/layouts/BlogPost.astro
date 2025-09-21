@@ -9,7 +9,7 @@ import Comments from '../components/Comments.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, author, tags, readingTime } = Astro.props;
+const { title, description, createdAt, updatedDate, heroImage, author, tags, readingTime } = Astro.props;
 ---
 
 <html lang="en">
@@ -87,7 +87,7 @@ const { title, description, pubDate, updatedDate, heroImage, author, tags, readi
 				<div class="prose">
 					<div class="title">
 						<div class="date">
-							<FormattedDate date={pubDate} />
+							<FormattedDate date={createdAt} />
 							{
 								updatedDate && (
 									<div class="last-updated-on">

@@ -1,7 +1,7 @@
 ---
 title: '13년차 프론트엔드 개발자의 기술 블로그 시작'
 description: '드디어 기술 블로그를 시작합니다. 그동안의 경험과 배움을 공유하려 합니다.'
-pubDate: 2025-01-20
+createdAt: 2025-01-20
 draft: true
 author: '유상훈'
 category: 'Personal'

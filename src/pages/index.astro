@@ -1,49 +1,193 @@
 ---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+// 최신 블로그 포스트 3개 가져오기
+const posts = (await getCollection('blog'))
+	.filter((post) => !post.data.draft)
+	.sort((a, b) => b.data.createdAt.valueOf() - a.data.createdAt.valueOf())
+	.slice(0, 3);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body>
+	<body class="bg-white dark:bg-gray-900">
 		<Header />
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+			<!-- Hero Section -->
+			<section class="relative overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-20">
+				<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="max-w-4xl mx-auto text-center">
+						<h1 class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+							안녕하세요, <span class="text-purple-600 dark:text-purple-400">Hue</span>입니다
+						</h1>
+						<p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
+							13년차 프론트엔드 개발자의 기술 블로그<br />
+							경험과 인사이트를 공유합니다
+						</p>
+						<div class="flex flex-col sm:flex-row gap-4 justify-center">
+							<a
+								href="/hue-log/blog"
+								class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 transition-colors"
+							>
+								블로그 보기
+							</a>
+							<a
+								href="/hue-log/about"
+								class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+							>
+								소개 보기
+							</a>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Latest Posts Section -->
+			<section class="py-16">
+				<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="max-w-6xl mx-auto">
+						<div class="flex items-center justify-between mb-8">
+							<h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+								최신 포스트
+							</h2>
+							<a
+								href="/hue-log/blog"
+								class="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors"
+							>
+								모든 포스트 보기 →
+							</a>
+						</div>
+
+						<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+							{
+								posts.map((post) => (
+									<article class="group">
+										<a href={`/hue-log/blog/${post.id}/`} class="block">
+											<div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+												{post.data.heroImage && (
+													<div class="aspect-w-16 aspect-h-9 overflow-hidden">
+														<Image
+															width={720}
+															height={360}
+															src={post.data.heroImage}
+															alt={post.data.title}
+															class="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
+														/>
+													</div>
+												)}
+
+												<div class="p-6">
+													<div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+														<FormattedDate date={post.data.createdAt} />
+														{post.data.category && (
+															<>
+																<span>•</span>
+																<span class="text-purple-600 dark:text-purple-400">
+																	{post.data.category}
+																</span>
+															</>
+														)}
+													</div>
+
+													<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+														{post.data.title}
+													</h3>
+
+													<p class="text-gray-600 dark:text-gray-300 line-clamp-3">
+														{post.data.description}
+													</p>
+												</div>
+											</div>
+										</a>
+									</article>
+								))
+							}
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Features Section -->
+			<section class="py-16 bg-gray-50 dark:bg-gray-800">
+				<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="max-w-6xl mx-auto">
+						<h2 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+							블로그 카테고리
+						</h2>
+						<div class="grid gap-8 md:grid-cols-3">
+							<div class="text-center">
+								<div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+									<svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">기술 포스트</h3>
+								<p class="text-gray-600 dark:text-gray-300">
+									프론트엔드 개발 경험과 기술 인사이트
+								</p>
+							</div>
+
+							<div class="text-center">
+								<div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+									<svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">학습 노트</h3>
+								<p class="text-gray-600 dark:text-gray-300">
+									새로운 기술 학습과 정리
+								</p>
+							</div>
+
+							<div class="text-center">
+								<div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+									<svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">일상 기록</h3>
+								<p class="text-gray-600 dark:text-gray-300">
+									개발자의 일상과 단상
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.line-clamp-3 {
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.aspect-w-16 {
+		position: relative;
+		padding-bottom: 56.25%;
+	}
+
+	.aspect-w-16 > * {
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+	}
+</style>
